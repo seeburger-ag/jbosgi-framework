@@ -52,6 +52,10 @@
             <groupId>org.jboss.modules</groupId>
             <artifactId>jboss-modules</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.jboss</groupId>
+            <artifactId>jboss-vfs</artifactId>
+        </dependency>
 
         <!-- JBoss OSGi Dependencies -->
         <dependency>
