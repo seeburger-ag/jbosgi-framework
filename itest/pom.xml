@@ -9,9 +9,9 @@
 <!--                                                                        -->
 <!-- ====================================================================== -->
 
-<!-- 
-  Set these VM properties in your IDE debugger 
-  
+<!--
+  Set these VM properties in your IDE debugger
+
   -Djava.util.logging.manager=org.jboss.logmanager.LogManager
   -Dtest.archive.directory=${workspace_loc:jbosgi-framework-itest/target}/test-libs
   -Djboss.osgi.vfs.leakDebugging=true
@@ -21,14 +21,14 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.jboss.osgi.framework</groupId>
+        <groupId>com.seeburger.fork</groupId>
         <artifactId>jbosgi-framework-parent</artifactId>
-        <version>1.1.8.Final</version>
+        <version>1.1.8.SEE1-SNAPSHOT</version>
     </parent>
 
     <name>JBossOSGi Framework iTest</name>
 
-    <groupId>org.jboss.osgi.framework</groupId>
+    <groupId>com.seeburger.fork</groupId>
     <artifactId>jbosgi-framework-itest</artifactId>
     <packaging>jar</packaging>
 
