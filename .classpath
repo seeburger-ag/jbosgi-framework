@@ -4,6 +4,7 @@
 	<classpathentry kind="src" path="core/src/main/java"/>
 	<classpathentry kind="src" path="core/src/test/java"/>
 	<classpathentry kind="src" path="aggregated/src/test/java"/>
+	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="C:/Users/Neubauer/.m2/repository/org/jboss/logging/jboss-logging/3.1.0.GA/jboss-logging-3.1.0.GA.jar" sourcepath="C:/Users/Neubauer/.m2/repository/org/jboss/logging/jboss-logging/3.1.0.GA/jboss-logging-3.1.0.GA-sources.jar">
 		<attributes>
@@ -11,6 +12,26 @@
 			<attribute name="maven.groupId" value="org.jboss.logging"/>
 			<attribute name="maven.artifactId" value="jboss-logging"/>
 			<attribute name="maven.version" value="3.1.0.GA"/>
+			<attribute name="maven.scope" value="provided"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="src" path="/jboss-modules"/>
+	<classpathentry kind="lib" path="C:/Users/Neubauer/.m2/repository/com/seeburger/as/jboss-msc/1.0.2.SEE1/jboss-msc-1.0.2.SEE1.jar" sourcepath="C:/Users/Neubauer/.m2/repository/com/seeburger/as/jboss-msc/1.0.2.SEE1/jboss-msc-1.0.2.SEE1-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="com.seeburger.as"/>
+			<attribute name="maven.artifactId" value="jboss-msc"/>
+			<attribute name="maven.version" value="1.0.2.SEE1"/>
+			<attribute name="maven.scope" value="provided"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/Neubauer/.m2/repository/org/osgi/org.osgi.core/4.2.0/org.osgi.core-4.2.0.jar" sourcepath="C:/Users/Neubauer/.m2/repository/org/osgi/org.osgi.core/4.2.0/org.osgi.core-4.2.0-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="javadoc_location" value="jar:file:/C:/Users/Neubauer/.m2/repository/org/osgi/org.osgi.core/4.2.0/org.osgi.core-4.2.0-javadoc.jar!/"/>
+			<attribute name="maven.groupId" value="org.osgi"/>
+			<attribute name="maven.artifactId" value="org.osgi.core"/>
+			<attribute name="maven.version" value="4.2.0"/>
 			<attribute name="maven.scope" value="provided"/>
 		</attributes>
 	</classpathentry>

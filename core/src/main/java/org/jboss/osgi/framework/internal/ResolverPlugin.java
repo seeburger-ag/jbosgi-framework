@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.jboss.logging.Logger;
 import org.jboss.modules.ModuleIdentifier;
@@ -67,6 +68,8 @@ final class ResolverPlugin extends AbstractPluginService<ResolverPlugin> {
     private final InjectedValue<NativeCodePlugin> injectedNativeCode = new InjectedValue<NativeCodePlugin>();
     private final XResolverFactory factory;
     private XResolver resolver;
+
+    private final ReentrantLock resolverLock = new ReentrantLock();
 
 
     static void addService(ServiceTarget serviceTarget) {
@@ -150,11 +153,18 @@ final class ResolverPlugin extends AbstractPluginService<ResolverPlugin> {
      */
     void resolve(XModule resModule) throws BundleException {
         List<XModule> resolved = new ArrayList<XModule>();
-        resolver.setCallbackHandler(new ResolverCallback(resolved));
+        resolverLock.lock();  // guarding resolve and callback actions
         try {
-            resolver.resolve(resModule);
-        } catch (XResolverException ex) {
-            throw new BundleException("Cannot resolve bundle resModule: " + resModule, ex);
+            resolver.setCallbackHandler(new ResolverCallback(resolved));
+            try {
+                resolver.resolve(resModule);
+            } catch (XResolverException ex) {
+                throw new BundleException("Cannot resolve bundle resModule: " + resModule, ex);
+            }
+        }
+        finally
+        {
+            resolverLock.unlock();
         }
 
         // Load the resolved module
@@ -188,11 +198,19 @@ final class ResolverPlugin extends AbstractPluginService<ResolverPlugin> {
         }
 
         List<XModule> resolved = new ArrayList<XModule>();
-        resolver.setCallbackHandler(new ResolverCallback(resolved));
-
-        // Resolve the modules
         log.debugf("Resolve modules: %s", unresolved);
-        boolean allResolved = resolver.resolveAll(unresolved);
+        resolverLock.lock();  // guarding resolve and callback actions
+        boolean allResolved;
+        try
+        {
+            resolver.setCallbackHandler(new ResolverCallback(resolved));
+            // Resolve the modules
+            allResolved = resolver.resolveAll(unresolved);
+        }
+        finally
+        {
+            resolverLock.unlock();
+        }
 
         // Report resolver errors
         if (allResolved == false) {
@@ -303,9 +321,9 @@ final class ResolverPlugin extends AbstractPluginService<ResolverPlugin> {
         public void markResolved(XModule module) {
             // Construct debug message
             if (log.isDebugEnabled()) {
-                StringBuffer buffer = new StringBuffer("Mark resolved: " + module);
+                StringBuffer buffer = new StringBuffer("Mark resolved: ").append(module);
                 for (XWire wire : module.getWires())
-                    buffer.append("\n " + wire.toString());
+                    buffer.append("\n ").append(wire.toString());
 
                 log.debugf(buffer.toString());
             }
