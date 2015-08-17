@@ -308,7 +308,38 @@ final class ServiceManagerPlugin extends AbstractPluginService<ServiceManagerPlu
                         }
                     };
                     final long serviceId = getNextServiceId();
-                    final Object value = valueProvider.getValue();
+                    Object value = null;
+                    int tries = 0;
+                    do
+                    {
+                        tries++;
+                        try
+                        {
+                            value = valueProvider.getValue();
+                        }
+                        catch (IllegalStateException e)
+                        {
+                            log.debug("Value is null for " + serviceName + ". Will get retried.");
+                            try
+                            {
+                                Thread.sleep(50);
+                            }
+                            catch (InterruptedException e1)
+                            {
+                                //
+                            }
+                        }
+                    }
+                    while (tries < 3 && value == null);
+
+                    if (value == null)
+                    {
+                        // could happen if the service is not yet initialized.
+                        // Then, I assume that it should not match any possible filter.
+                        log.warn("Could not get value for " + serviceName + ". Probably because it is not yet initialized. " + "Assuming it does not match any possible filter.");
+                        continue;
+                    }
+
                     final AbstractBundleState auxBundle = injectedModuleManager.getValue().getBundleState(value.getClass());
                     final AbstractBundleState owner = (auxBundle != null ? auxBundle : injectedBundleManager.getValue().getSystemBundle());
                     final String auxName = (className != null ? className : serviceName.getSimpleName());
