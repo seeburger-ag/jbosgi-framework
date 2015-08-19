@@ -351,7 +351,7 @@ abstract class AbstractBundleContext implements BundleContext {
 
     @Override
     public boolean ungetService(ServiceReference sref) {
-        checkValidBundleContext();
+//        checkValidBundleContext();
         ServiceState serviceState = ServiceState.assertServiceState(sref);
         return getServiceManager().ungetService(bundleState, serviceState);
     }
