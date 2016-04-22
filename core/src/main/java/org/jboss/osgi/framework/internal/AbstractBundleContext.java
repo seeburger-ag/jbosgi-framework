@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Dictionary;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -386,4 +387,38 @@ abstract class AbstractBundleContext implements BundleContext {
     public String toString() {
         return "BundleContext[" + bundleState + "]";
     }
+
+	@Override
+	public <S> ServiceRegistration<S> registerService(Class<S> clazz, S service, Dictionary<String, ?> properties) {
+
+		return registerService(clazz.getName(), service, properties);
+	}
+
+	@Override
+	public <S> ServiceReference<S> getServiceReference(Class<S> clazz) {
+		return getServiceReference(clazz.getName());
+	}
+
+	@Override
+	public <S> Collection<ServiceReference<S>> getServiceReferences(Class<S> clazz, String filter)
+			throws InvalidSyntaxException {
+		ServiceReference[] serviceReferences = getServiceReferences(clazz.getName(), filter);
+		List<ServiceReference<S>> result = new ArrayList<ServiceReference<S>>();
+		for (ServiceReference<S> s : serviceReferences) {
+			result.add(s);
+		}
+		return result;
+	}
+
+	@Override
+	public Bundle getBundle(String location) {
+		if(location==null)
+			return null;
+		Bundle[] bundles = getBundles();
+		for (Bundle bundle : bundles) {
+			if(location.equals(bundle.getLocation()))
+				return bundle;
+		}
+		return null;
+	}
 }

@@ -97,7 +97,7 @@ final class FrameworkEventsPlugin extends AbstractPluginService<FrameworkEventsP
 
     private final ExecutorService bundleEventExecutor;
     private final ExecutorService frameworkEventExecutor;
-    
+
     static void addService(ServiceTarget serviceTarget) {
         FrameworkEventsPlugin service = new FrameworkEventsPlugin();
         ServiceBuilder<FrameworkEventsPlugin> builder = serviceTarget.addService(InternalServices.FRAMEWORK_EVENTS_PLUGIN, service);
@@ -301,7 +301,7 @@ final class FrameworkEventsPlugin extends AbstractPluginService<FrameworkEventsP
                         try {
                             ListenerInfoImpl info = (ListenerInfoImpl) slreg.getListenerInfo();
                             info.setRemoved(true);
-                            hook.removed(Collections.singleton(info));
+                            hook.removed(Collections.singleton((ListenerInfo)info));
                         } catch (RuntimeException ex) {
                             log.errorf(ex, "Error processing ListenerHook: %s", hook);
                         }

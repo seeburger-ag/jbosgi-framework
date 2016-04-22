@@ -22,13 +22,14 @@
 package org.jboss.osgi.framework.util;
 
 import java.util.Dictionary;
+import java.util.Map;
 
 import org.osgi.framework.Filter;
 import org.osgi.framework.ServiceReference;
 
 /**
  * Dummy filter implementation
- * 
+ *
  * @author <a href="adrian@jboss.com">Adrian Brock</a>
  * @version $Revision: 1.1 $
  */
@@ -61,4 +62,9 @@ public class NoFilter implements Filter {
     public String toString() {
         return null;
     }
+
+	@Override
+	public boolean matches(Map<String, ?> map) {
+		return true;
+	}
 }

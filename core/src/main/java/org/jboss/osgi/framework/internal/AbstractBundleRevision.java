@@ -86,7 +86,7 @@ abstract class AbstractBundleRevision {
         return metadata;
     }
 
-    Version getVersion() {
+    public Version getVersion() {
         return metadata.getBundleVersion();
     }
 

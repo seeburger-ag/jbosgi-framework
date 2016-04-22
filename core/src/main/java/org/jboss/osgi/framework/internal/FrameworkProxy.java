@@ -26,6 +26,7 @@ import static org.jboss.osgi.framework.Constants.DEFAULT_FRAMEWORK_START_TIMEOUT
 import static org.jboss.osgi.framework.Constants.PROPERTY_FRAMEWORK_INIT_TIMEOUT;
 import static org.jboss.osgi.framework.Constants.PROPERTY_FRAMEWORK_START_TIMEOUT;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -57,6 +58,7 @@ import org.osgi.framework.FrameworkEvent;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.Version;
 import org.osgi.framework.launch.Framework;
+import org.osgi.framework.wiring.BundleWiring;
 
 /**
  * The proxy that represents the {@link Framework}.
@@ -518,4 +520,24 @@ final class FrameworkProxy implements Framework {
             return serviceContainer.isShutdownComplete();
         }
     }
+
+	@Override
+	public <A> A adapt(Class<A> type) {
+		if(type.isAssignableFrom(BundleContext.class))
+			return (A) getBundleContext();
+		if(type.isAssignableFrom(BundleWiring.class))
+
+			return (A) new BundleWiringImpl(this);
+		return null;
+	}
+
+	@Override
+	public File getDataFile(String filename) {
+		return null;
+	}
+
+	@Override
+	public int compareTo(Bundle o) {
+		return (int) (getBundleId()-o.getBundleId());
+	}
 }
