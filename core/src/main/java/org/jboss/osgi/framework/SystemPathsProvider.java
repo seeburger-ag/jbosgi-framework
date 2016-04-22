@@ -45,16 +45,17 @@ public interface SystemPathsProvider extends Service<SystemPathsProvider> {
             "org.jboss.osgi.modules;version=1.0",
             "org.jboss.osgi.spi;version=2.0",
             "org.jboss.osgi.vfs;version=1.0",
-            "org.osgi.framework;version=1.5",
+            "org.osgi.framework;version=1.6",
             "org.osgi.framework.hooks;version=1.0",
-            "org.osgi.framework.hooks.service;version=1.0",
+            "org.osgi.framework.hooks.service;version=1.1",
+            "org.osgi.framework.hooks.weaving;version=1.0",
             "org.osgi.framework.launch;version=1.0",
             "org.osgi.service.condpermadmin;version=1.1",
             "org.osgi.service.packageadmin;version=1.2",
             "org.osgi.service.permissionadmin;version=1.2",
             "org.osgi.service.startlevel;version=1.1",
             "org.osgi.service.url;version=1.0",
-            "org.osgi.util.tracker;version=1.4",
+            "org.osgi.util.tracker;version=1.5",
             "org.osgi.util.xml;version=1.0"
     };
 

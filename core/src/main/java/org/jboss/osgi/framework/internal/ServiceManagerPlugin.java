@@ -481,11 +481,11 @@ final class ServiceManagerPlugin extends AbstractPluginService<ServiceManagerPlu
         for (ServiceReference hookRef : sortedHookRefs)
             hooks.add((FindHook) context.getService(hookRef));
 
-        Collection<ServiceReference> hookParam = new ArrayList<ServiceReference>();
+        Collection<ServiceReference<?>> hookParam = new ArrayList<ServiceReference<?>>();
         for (ServiceState aux : serviceStates)
             hookParam.add(aux.getReference());
 
-        hookParam = new RemoveOnlyCollection<ServiceReference>(hookParam);
+        hookParam = new RemoveOnlyCollection<ServiceReference<?>>(hookParam);
         for (FindHook hook : hooks) {
             try {
                 hook.find(context, clazz, filterStr, !checkAssignable, hookParam);
