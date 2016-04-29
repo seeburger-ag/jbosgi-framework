@@ -34,6 +34,7 @@ import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -135,8 +136,11 @@ final class FrameworkProxy implements Framework {
         int state = getState();
         if (state == Bundle.STARTING || state == Bundle.ACTIVE || state == Bundle.STOPPING)
             return;
-
         log.debugf("init framework");
+        if(!System.getProperties().containsKey(org.osgi.framework.Constants.FRAMEWORK_UUID))
+        {
+        	System.setProperty(org.osgi.framework.Constants.FRAMEWORK_UUID, UUID.randomUUID().toString());
+        }
         try {
             frameworkStopped.set(false);
 
