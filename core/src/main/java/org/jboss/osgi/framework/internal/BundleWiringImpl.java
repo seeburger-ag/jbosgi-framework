@@ -104,7 +104,31 @@ public class BundleWiringImpl implements BundleWiring {
 
 	@Override
 	public Collection<String> listResources(String path, String filePattern, int options) {
-		throw new UnsupportedOperationException();
+		Enumeration<String> paths = state.getEntryPaths(path);
+		List<String> patternList = null;
+
+		if(filePattern!=null)
+		{
+			patternList = SimpleFilter.parseSubstring(filePattern);
+		}
+		List<String> results = new ArrayList<String>();
+		while (paths.hasMoreElements()) {
+			String string = (String) paths.nextElement();
+			if(matches(string,patternList))
+				results.add(string);
+		}
+		return results;
+	}
+
+	private boolean matches(String resource, List<String> filePattern) {
+
+		if(filePattern==null || filePattern.isEmpty())
+			return true;
+        if (resource.charAt(resource.length() - 1) == '/')
+        {
+            resource = resource.substring(0, resource.length() - 1);
+        }
+        return SimpleFilter.compareSubstring(filePattern, resource);
 	}
 
 }
