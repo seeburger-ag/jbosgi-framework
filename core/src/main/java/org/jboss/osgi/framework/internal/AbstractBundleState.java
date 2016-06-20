@@ -624,7 +624,7 @@ abstract class AbstractBundleState implements Bundle {
 		if(type.isAssignableFrom(BundleContext.class))
 			return (A) getBundleContext();
 		if(type.isAssignableFrom(BundleWiring.class))
-			return (A) new BundleWiringImpl(this);
+			return (A) new BundleWiringImpl(this,getResolverModule());
 		return null;
 	}
 

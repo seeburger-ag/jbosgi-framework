@@ -531,7 +531,7 @@ final class FrameworkProxy implements Framework {
 			return (A) getBundleContext();
 		if(type.isAssignableFrom(BundleWiring.class))
 
-			return (A) new BundleWiringImpl(this);
+			return (A) new BundleWiringImpl(this,null);
 		return null;
 	}
 
