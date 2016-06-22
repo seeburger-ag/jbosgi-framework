@@ -33,7 +33,7 @@ public class BundleWiringImpl implements BundleWiring {
 	public BundleWiringImpl(Bundle abstractBundleState, XModule xmodule) {
 		this.state = abstractBundleState;
 		this.xmodule = xmodule;
-		this.revision = new BundleRevisionImpl();
+		this.revision = new BundleRevisionImpl(this);
 	}
 
 	@Override
@@ -230,48 +230,56 @@ public class BundleWiringImpl implements BundleWiring {
 
 		@Override
 		public BundleRevision getRevision() {
-			return new BundleRevisionImpl();
+			Bundle bundle = capability.getModule().getAttachment(Bundle.class);
+			BundleWiring wiring = bundle.adapt(BundleWiring.class);
+			return wiring.getRevision();
 		}
 	}
 
-	private class BundleRevisionImpl implements BundleRevision
+	private static class BundleRevisionImpl implements BundleRevision
 	{
+
+		private BundleWiringImpl wiring;
+
+		public BundleRevisionImpl(BundleWiringImpl wiring) {
+			this.wiring = wiring;
+		}
 
 		@Override
 		public Bundle getBundle() {
-			return state;
+			return wiring.getBundle();
 		}
 
 		@Override
 		public String getSymbolicName() {
-			return state.getSymbolicName();
+			return wiring.getBundle().getSymbolicName();
 		}
 
 		@Override
 		public Version getVersion() {
-			return state.getVersion();
+			return wiring.getBundle().getVersion();
 		}
 
 		@Override
 		public List<BundleCapability> getDeclaredCapabilities(String namespace) {
-			return BundleWiringImpl.this.getCapabilities(namespace);
+			return wiring.getCapabilities(namespace);
 		}
 
 		@Override
 		public List<BundleRequirement> getDeclaredRequirements(String namespace) {
-			return BundleWiringImpl.this.getRequirements(namespace);
+			return wiring.getRequirements(namespace);
 		}
 
 		@Override
 		public int getTypes() {
-			if(state.getHeaders().get(Constants.FRAGMENT_HOST)!=null)
+			if(wiring.getBundle().getHeaders().get(Constants.FRAGMENT_HOST)!=null)
 				return BundleRevision.TYPE_FRAGMENT;
 			return 0;
 		}
 
 		@Override
 		public BundleWiring getWiring() {
-			return BundleWiringImpl.this;
+			return wiring;
 		}
 	}
 
