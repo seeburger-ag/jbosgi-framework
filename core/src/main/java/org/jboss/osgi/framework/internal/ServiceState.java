@@ -445,7 +445,7 @@ final class ServiceState implements ServiceRegistration, ServiceReference {
         ServiceFactory factory;
         AbstractBundleState bundleState;
         AtomicInteger useCount;
-        Object value;
+        volatile Object value;
 
         ServiceFactoryHolder(AbstractBundleState bundleState, ServiceFactory factory) {
             this.bundleState = bundleState;
@@ -454,37 +454,50 @@ final class ServiceState implements ServiceRegistration, ServiceReference {
         }
 
         Object getService() {
+
             // Multiple calls to getService() return the same value
-            if (useCount.get() == 0) {
+            if (useCount.get() == 0 || value==null) {
                 // The Framework must not allow this method to be concurrently called for the same bundle
                 synchronized (bundleState) {
-                    Object retValue = factory.getService(bundleState, getRegistration());
-                    if (retValue == null)
-                        return null;
+                	if(useCount.get() == 0 || value==null) {
+                		Object retValue = factory.getService(bundleState, getRegistration());
+                		if (retValue == null) {
+                			log.warnf("service factory %s returned a null value for %s",factory,getProperty(Constants.OBJECTCLASS));
+                			return null;
+                		}
 
-                    // The Framework will check if the returned service object is an instance of all the
-                    // classes named when the service was registered. If not, then null is returned to the bundle.
-                    if (checkValidClassNames(ownerBundle, (String[]) getProperty(Constants.OBJECTCLASS), retValue) == false)
-                        return null;
-
-                    value = retValue;
+                		// The Framework will check if the returned service object is an instance of all the
+                		// classes named when the service was registered. If not, then null is returned to the bundle.
+                		if (checkValidClassNames(ownerBundle, (String[]) getProperty(Constants.OBJECTCLASS), retValue) == false)
+                			return null;
+                		value = retValue;
+                	}
                 }
             }
 
-            useCount.incrementAndGet();
+
+            int newValue = useCount.incrementAndGet();
+            if(newValue<=0) {
+            	//could either be a threading issue or an overflow
+            	log.warn("service use counter is incorrect: "+newValue+". Resetting to 1");
+            	useCount.set(1);
+            }
             return value;
         }
 
         void ungetService() {
             if (useCount.get() == 0)
                 return;
-
+            int current = useCount.decrementAndGet();
             // Call unget on the factory when done
-            if (useCount.decrementAndGet() == 0) {
+            if (current <= 0) {
                 synchronized (bundleState) {
-                    factory.ungetService(bundleState, getRegistration(), value);
-                    value = null;
+                	if(current == 0) {
+                		factory.ungetService(bundleState, getRegistration(), value);
+                		value = null;
+                	}
                 }
+                useCount.compareAndSet(current, 0);
             }
         }
     }
