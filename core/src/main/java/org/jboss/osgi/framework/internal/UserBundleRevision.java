@@ -131,16 +131,6 @@ abstract class UserBundleRevision extends AbstractBundleRevision {
     @Override
     URL getEntry(String path) {
         getBundleState().assertNotUninstalled();
-        if(deployment!=null && deployment.getRoot()!=null)
-        {
-        	try {
-            	VirtualFile child = deployment.getRoot().getChild(path);
-            	if(child != null)
-            		return child.toURL();
-        	} catch (IOException ex) {
-            	log.errorf(ex, "Cannot get entry: %s", path);
-        	}
-        }
         return entriesProvider.getEntry(path);
     }
 
