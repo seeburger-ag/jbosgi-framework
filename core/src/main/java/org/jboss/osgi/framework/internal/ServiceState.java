@@ -21,19 +21,6 @@
  */
 package org.jboss.osgi.framework.internal;
 
-import org.jboss.logging.Logger;
-import org.jboss.msc.service.ServiceName;
-import org.jboss.osgi.framework.Services;
-import org.jboss.osgi.metadata.CaseInsensitiveDictionary;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.Constants;
-import org.osgi.framework.FrameworkEvent;
-import org.osgi.framework.ServiceEvent;
-import org.osgi.framework.ServiceException;
-import org.osgi.framework.ServiceFactory;
-import org.osgi.framework.ServiceReference;
-import org.osgi.framework.ServiceRegistration;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -47,6 +34,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.jboss.logging.Logger;
+import org.jboss.msc.service.ServiceName;
+import org.jboss.osgi.framework.Services;
+import org.jboss.osgi.metadata.CaseInsensitiveDictionary;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.Constants;
+import org.osgi.framework.FrameworkEvent;
+import org.osgi.framework.ServiceEvent;
+import org.osgi.framework.ServiceException;
+import org.osgi.framework.ServiceFactory;
+import org.osgi.framework.ServiceReference;
+import org.osgi.framework.ServiceRegistration;
 
 /**
  * The service implementation.
@@ -173,7 +173,7 @@ final class ServiceState implements ServiceRegistration, ServiceReference {
             // null is returned and a Framework event of type {@link FrameworkEvent#ERROR}
             // containing a {@link ServiceException} describing the error is fired.
             if (result == null) {
-                ServiceException sex = new ServiceException("Cannot get factory value for service of type "+getProperty(Constants.OBJECTCLASS), ServiceException.FACTORY_ERROR);
+                ServiceException sex = new ServiceException("Cannot get factory value for service "+ServiceState.this.toString(), ServiceException.FACTORY_ERROR);
                 FrameworkEventsPlugin eventsPlugin = serviceManager.getFrameworkEventsPlugin();
                 eventsPlugin.fireFrameworkEvent(bundleState, FrameworkEvent.ERROR, sex);
             }
@@ -464,15 +464,18 @@ final class ServiceState implements ServiceRegistration, ServiceReference {
                 	if(useCount.get() == 0 || value==null) {
                 		localValue = factory.getService(bundleState, getRegistration());
                 		if (localValue == null) {
-                			log.errorf("service factory %s returned a null value for %s",factory,getProperty(Constants.OBJECTCLASS));
+                			log.errorf("service factory %s returned a null value for %s",ServiceState.this.toString());
                 			return null;
                 		}
-
                 		// The Framework will check if the returned service object is an instance of all the
                 		// classes named when the service was registered. If not, then null is returned to the bundle.
                 		if (checkValidClassNames(ownerBundle, (String[]) getProperty(Constants.OBJECTCLASS), localValue) == false)
                 			return null;
                 		value = localValue;
+                	}
+                	else
+                	{
+                		localValue = value;
                 	}
                 }
             }
