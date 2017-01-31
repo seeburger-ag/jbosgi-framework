@@ -36,6 +36,17 @@ class BundleReferenceClassLoader<T extends AbstractBundleState> extends ModuleCl
 
     private final T bundleState;
 
+    static {
+        boolean parallelOk = true;
+        try {
+            parallelOk = ClassLoader.registerAsParallelCapable();
+        } catch (Throwable ignored) {
+        }
+        if (!parallelOk) {
+            throw new Error("Failed to register " + BundleReferenceClassLoader.class.getName() + " as parallel-capable");
+        }
+    }
+
     BundleReferenceClassLoader(Configuration configuration, T bundleState) {
         super(configuration);
         if (bundleState == null)

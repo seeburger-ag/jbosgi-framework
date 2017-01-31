@@ -27,7 +27,7 @@ import org.jboss.modules.ModuleClassLoaderFactory;
 import org.jboss.modules.filter.PathFilter;
 
 /**
- * A {@link ModuleClassLoader} that hosld a reference to the underlying bundle.
+ * A {@link ModuleClassLoader} that holds a reference to the underlying bundle.
  *
  * @author thomas.diesler@jboss.com
  * @since 16-Dec-2010
@@ -35,12 +35,23 @@ import org.jboss.modules.filter.PathFilter;
 final class HostBundleClassLoader extends BundleReferenceClassLoader<HostBundleState> {
 
     private final PathFilter lazyFilter;
-    
+
+    static {
+        boolean parallelOk = true;
+        try {
+            parallelOk = ClassLoader.registerAsParallelCapable();
+        } catch (Throwable ignored) {
+        }
+        if (!parallelOk) {
+            throw new Error("Failed to register " + HostBundleClassLoader.class.getName() + " as parallel-capable");
+        }
+    }
+
     private HostBundleClassLoader(Configuration configuration, HostBundleState bundleState, PathFilter lazyFilter) {
         super(configuration, bundleState);
         this.lazyFilter = lazyFilter;
     }
-    
+
     @Override
     protected void preDefine(ClassSpec classSpec, String className) {
         if (getBundleState().awaitLazyActivation()) {
