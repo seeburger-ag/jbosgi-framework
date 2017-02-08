@@ -49,8 +49,8 @@ import org.jboss.msc.service.ServiceName;
 import org.jboss.osgi.metadata.CaseInsensitiveDictionary;
 import org.jboss.osgi.metadata.OSGiMetaData;
 import org.jboss.osgi.resolver.XModule;
-import org.jboss.osgi.spi.NotImplementedException;
 import org.jboss.osgi.spi.ConstantsHelper;
+import org.jboss.osgi.spi.NotImplementedException;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleEvent;
@@ -543,6 +543,7 @@ abstract class AbstractBundleState implements Bundle {
         // If this bundle's state is INSTALLED, this method must attempt to resolve this bundle
         // If this bundle cannot be resolved, a Framework event of type FrameworkEvent.ERROR is fired
         // containing a BundleException with details of the reason this bundle could not be resolved.
+        BundleException bundleException = null;
         synchronized (this) {
             XModule resModule = getResolverModule();
             if (resModule.isResolved())
@@ -558,12 +559,15 @@ abstract class AbstractBundleState implements Bundle {
                 return true;
             } catch (BundleException ex) {
                 if (fireEvent == true) {
-                    FrameworkEventsPlugin eventsPlugin = getFrameworkState().getFrameworkEventsPlugin();
-                    eventsPlugin.fireFrameworkEvent(this, FrameworkEvent.ERROR, ex);
+                    bundleException = ex;
                 }
-                return false;
             }
         }
+        if (bundleException!=null) {
+            FrameworkEventsPlugin eventsPlugin = getFrameworkState().getFrameworkEventsPlugin();
+            eventsPlugin.fireFrameworkEvent(this, FrameworkEvent.ERROR, bundleException);
+        }
+        return false;
     }
 
     /**
