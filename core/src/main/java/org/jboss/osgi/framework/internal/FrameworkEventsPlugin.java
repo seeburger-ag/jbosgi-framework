@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -84,11 +85,11 @@ final class FrameworkEventsPlugin extends AbstractPluginService<FrameworkEventsP
     private final InjectedValue<BundleContext> injectedSystemContext = new InjectedValue<BundleContext>();
 
     /** The bundleState listeners */
-    private final Map<AbstractBundleState, List<BundleListener>> bundleListeners = new ConcurrentHashMap<AbstractBundleState, List<BundleListener>>();
+    private final ConcurrentMap<AbstractBundleState, List<BundleListener>> bundleListeners = new ConcurrentHashMap<AbstractBundleState, List<BundleListener>>();
     /** The framework listeners */
-    private final Map<AbstractBundleState, List<FrameworkListener>> frameworkListeners = new ConcurrentHashMap<AbstractBundleState, List<FrameworkListener>>();
+    private final ConcurrentMap<AbstractBundleState, List<FrameworkListener>> frameworkListeners = new ConcurrentHashMap<AbstractBundleState, List<FrameworkListener>>();
     /** The service listeners */
-    private final Map<AbstractBundleState, List<ServiceListenerRegistration>> serviceListeners = new ConcurrentHashMap<AbstractBundleState, List<ServiceListenerRegistration>>();
+    private final ConcurrentMap<AbstractBundleState, List<ServiceListenerRegistration>> serviceListeners = new ConcurrentHashMap<AbstractBundleState, List<ServiceListenerRegistration>>();
 
     /** The set of bundleState events that are delivered to an (asynchronous) BundleListener */
     private Set<Integer> asyncBundleEvents = new HashSet<Integer>();
@@ -168,11 +169,12 @@ final class FrameworkEventsPlugin extends AbstractPluginService<FrameworkEventsP
 
         List<BundleListener> listeners = bundleListeners.get(bundleState);
         if (listeners == null) {
-            listeners = new CopyOnWriteArrayList<BundleListener>();
+            listeners = new CopyOnWriteArrayList<BundleListener>(new BundleListener[] {listener});
             bundleListeners.put(bundleState, listeners);
         }
-        if (listeners.contains(listener) == false)
+        else if (!listeners.contains(listener)) {
             listeners.add(listener);
+        }
     }
 
     void removeBundleListener(final AbstractBundleState bundleState, final BundleListener listener) {
@@ -198,10 +200,10 @@ final class FrameworkEventsPlugin extends AbstractPluginService<FrameworkEventsP
 
         List<FrameworkListener> listeners = frameworkListeners.get(bundleState);
         if (listeners == null) {
-            listeners = new CopyOnWriteArrayList<FrameworkListener>();
+            listeners = new CopyOnWriteArrayList<FrameworkListener>(new FrameworkListener[] {listener});
             frameworkListeners.put(bundleState, listeners);
         }
-        if (listeners.contains(listener) == false)
+        if (!listeners.contains(listener))
             listeners.add(listener);
     }
 
@@ -338,9 +340,8 @@ final class FrameworkEventsPlugin extends AbstractPluginService<FrameworkEventsP
         // Get a snapshot of the current listeners
         final List<BundleListener> listeners = new ArrayList<BundleListener>();
         for (Entry<AbstractBundleState, List<BundleListener>> entry : bundleListeners.entrySet()) {
-            for (BundleListener listener : entry.getValue()) {
-                listeners.add(listener);
-            }
+            final List<BundleListener> newBundleListeners = entry.getValue();
+            listeners.addAll(newBundleListeners);
         }
 
         // Expose the bundleState wrapper not the state itself
@@ -395,9 +396,8 @@ final class FrameworkEventsPlugin extends AbstractPluginService<FrameworkEventsP
         // Get a snapshot of the current listeners
         final ArrayList<FrameworkListener> listeners = new ArrayList<FrameworkListener>();
         for (Entry<AbstractBundleState, List<FrameworkListener>> entry : frameworkListeners.entrySet()) {
-            for (FrameworkListener listener : entry.getValue()) {
-                listeners.add(listener);
-            }
+            List<FrameworkListener> newFrameworkListeners = entry.getValue();
+            listeners.addAll(newFrameworkListeners);
         }
 
         // Expose the wrapper not the state itself
