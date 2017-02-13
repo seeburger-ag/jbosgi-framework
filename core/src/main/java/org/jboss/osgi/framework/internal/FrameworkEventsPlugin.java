@@ -203,7 +203,7 @@ final class FrameworkEventsPlugin extends AbstractPluginService<FrameworkEventsP
             listeners = new CopyOnWriteArrayList<FrameworkListener>(new FrameworkListener[] {listener});
             frameworkListeners.put(bundleState, listeners);
         }
-        if (!listeners.contains(listener))
+        else if (!listeners.contains(listener))
             listeners.add(listener);
     }
 
