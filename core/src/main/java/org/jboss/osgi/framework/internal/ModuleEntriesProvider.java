@@ -66,7 +66,8 @@ final class ModuleEntriesProvider implements EntriesProvider {
 
     @Override
     public Enumeration<URL> findEntries(String path, String pattern, boolean recurse) {
-        log.warnf("[JBOSGI-408] Bundle entry related functionality for plain modules");
+        log.debugf("[JBOSGI-408] ModuleEntriesProvider.findEntries not implemented. Called for module=%s with path=%s and pattern=%s",
+                   module.getIdentifier().getName(), path, pattern);
         return null;
     }
 }
