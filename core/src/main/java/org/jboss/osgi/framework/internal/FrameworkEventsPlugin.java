@@ -30,7 +30,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -406,10 +405,14 @@ final class FrameworkEventsPlugin extends AbstractPluginService<FrameworkEventsP
 
         switch (event.getType()) {
             case FrameworkEvent.ERROR:
-                log.errorf(th, "Framework %s", typeName);
+                if (shouldLog(th)) {
+                    log.errorf(th, "Framework %s", typeName);
+                }
                 break;
             case FrameworkEvent.WARNING:
-                log.warnf(th, "Framework %s", typeName);
+                if (shouldLog(th)) {
+                    log.warnf(th, "Framework %s", typeName);
+                }
                 break;
             default:
                 log.tracef(th, "Framework %s", typeName);
@@ -450,6 +453,20 @@ final class FrameworkEventsPlugin extends AbstractPluginService<FrameworkEventsP
 
         // Fire the event in a runnable
         frameworkEventExecutor.execute(runnable);
+    }
+
+    private boolean shouldLog(Throwable th)
+    {
+        if (th==null || th.getStackTrace()==null) {
+            return true;
+        }
+        for (StackTraceElement e : th.getStackTrace()) {
+            if (e.getClassName().equals("org.apache.aries.rsa.topologymanager.exporter.TopologyManagerExport") &&
+                e.getMethodName().equals("canAccessService")) {
+                return false;
+            }
+        }
+        return true;
     }
 
     void fireServiceEvent(final AbstractBundleState bundleState, int type, final ServiceState serviceState) {
