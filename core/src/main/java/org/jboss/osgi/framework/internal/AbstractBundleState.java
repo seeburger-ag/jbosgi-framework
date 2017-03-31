@@ -246,9 +246,13 @@ abstract class AbstractBundleState implements Bundle {
 
     void addServiceInUse(ServiceState serviceState) {
         log.tracef("Add service in use %s to: %s", serviceState, this);
-        usedServices.putIfAbsent(serviceState, new AtomicInteger());
-        AtomicInteger count = usedServices.get(serviceState);
-        count.incrementAndGet();
+        AtomicInteger count = new AtomicInteger();
+        AtomicInteger result = usedServices.putIfAbsent(serviceState, count);
+        if(result!=null)
+        	count = result;
+        synchronized (count) {
+        	count.incrementAndGet();
+        }
     }
 
     int removeServiceInUse(ServiceState serviceState) {
@@ -257,11 +261,13 @@ abstract class AbstractBundleState implements Bundle {
         if (count == null)
             return -1;
 
-        int countVal = count.decrementAndGet();
-        if (countVal == 0)
-            usedServices.remove(serviceState);
-
-        return countVal;
+        if (0 == count.decrementAndGet()) {
+        	synchronized(count) {
+        		if(count.get()==0)
+        			usedServices.remove(serviceState);
+        	}
+        }
+        return count.get();
     }
 
     @Override
