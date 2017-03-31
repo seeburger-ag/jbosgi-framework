@@ -203,6 +203,13 @@
             <groupId>org.jboss.osgi.spi</groupId>
             <artifactId>jbosgi-spi</artifactId>
         </dependency>
+
+        <!-- Add core deps as test deps to have the project buildable in Eclipse -->
+        <dependency>
+            <groupId>org.jboss.osgi.resolver</groupId>
+            <artifactId>jbosgi-resolver-felix</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <!-- Modules -->
