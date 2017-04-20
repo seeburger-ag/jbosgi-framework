@@ -33,6 +33,10 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.jboss.logging.Logger;
@@ -67,7 +71,7 @@ final class ServiceState implements ServiceRegistration, ServiceReference {
     private final ValueProvider valueProvider;
     private final ServiceReference reference;
     private ServiceRegistration registration;
-    private Set<AbstractBundleState> usingBundles;
+    private final Set<AbstractBundleState> usingBundles = Collections.newSetFromMap(new ConcurrentHashMap());
     private Map<Long, ServiceFactoryHolder> factoryValues;
 
     // The properties
@@ -227,7 +231,7 @@ final class ServiceState implements ServiceRegistration, ServiceReference {
 
     void unregisterInternal() {
         serviceManager.unregisterService(this);
-        usingBundles = null;
+        usingBundles.clear();
         registration = null;
     }
 
@@ -287,43 +291,39 @@ final class ServiceState implements ServiceRegistration, ServiceReference {
     }
 
     void addUsingBundle(AbstractBundleState bundleState) {
-        synchronized (this) {
-            if (usingBundles == null)
-                usingBundles = new HashSet<AbstractBundleState>();
-
-            usingBundles.add(bundleState);
-        }
+        assert usingBundles != null;
+        usingBundles.add(bundleState);
     }
 
     void removeUsingBundle(AbstractBundleState bundleState) {
-        synchronized (this) {
-            if (usingBundles != null)
-                usingBundles.remove(bundleState);
-        }
+        assert usingBundles != null;
+        usingBundles.remove(bundleState);
     }
 
     Set<AbstractBundleState> getUsingBundlesInternal() {
-        synchronized (this) {
-            if (usingBundles == null)
-                return Collections.emptySet();
+        assert usingBundles != null;
+        if (usingBundles.isEmpty())
+            return Collections.emptySet();
 
-            // Return an unmodifieable snapshot of the set
-            return Collections.unmodifiableSet(new HashSet<AbstractBundleState>(usingBundles));
-        }
+        // Return an unmodifiable snapshot of the set (if becomes empty in the meantime does not harm
+        return Collections.unmodifiableSet(new HashSet<AbstractBundleState>(usingBundles));
     }
 
     @Override
     public Bundle[] getUsingBundles() {
-        synchronized (this) {
-            if (usingBundles == null)
-                return null;
+        assert usingBundles != null;
+        if (usingBundles.isEmpty())
+            return null;
 
-            Set<Bundle> bundles = new HashSet<Bundle>();
-            for (AbstractBundleState aux : usingBundles)
-                bundles.add(aux);
+        Set<Bundle> bundles = new HashSet<Bundle>();
+        for (AbstractBundleState aux : usingBundles)
+            bundles.add(aux);
 
-            return bundles.toArray(new Bundle[bundles.size()]);
-        }
+        // re-check here in case usingBundles did change after first check
+        if (bundles.isEmpty())
+            return null;
+
+        return bundles.toArray(new Bundle[bundles.size()]);
     }
 
     @Override
@@ -442,10 +442,11 @@ final class ServiceState implements ServiceRegistration, ServiceReference {
 
     class ServiceFactoryHolder {
 
-        ServiceFactory factory;
-        AbstractBundleState bundleState;
-        AtomicInteger useCount;
+        final ServiceFactory factory;
+        final AbstractBundleState bundleState;
+        final AtomicInteger useCount;
         volatile Object value;
+        private final Semaphore semaphore = new Semaphore(1);
 
         ServiceFactoryHolder(AbstractBundleState bundleState, ServiceFactory factory) {
             this.bundleState = bundleState;
@@ -455,11 +456,12 @@ final class ServiceState implements ServiceRegistration, ServiceReference {
 
         Object getService() {
 
-        	Object localValue = value;
+            Object localValue = value;
             // Multiple calls to getService() return the same value
             if (localValue==null) {
                 // The Framework must not allow this method to be concurrently called for the same bundle
-                synchronized (bundleState) {
+                semaphore.acquireUninterruptibly();
+                try {
                 	// with this it is in rare cases possible that we call factory.getService twice, but that is better than not returning anything
                 	if(useCount.get() == 0 || value==null) {
                 		localValue = factory.getService(bundleState, getRegistration());
@@ -478,6 +480,9 @@ final class ServiceState implements ServiceRegistration, ServiceReference {
                 		localValue = value;
                 	}
                 }
+                finally {
+                    semaphore.release();
+                }
             }
             useCount.incrementAndGet();
             return localValue;
@@ -486,11 +491,15 @@ final class ServiceState implements ServiceRegistration, ServiceReference {
         void ungetService() {
             // Call unget on the factory when done
             if (useCount.decrementAndGet() == 0) {
-                synchronized (bundleState) {
+                semaphore.acquireUninterruptibly();
+                try {
                 	if(useCount.get() == 0) {
                 		factory.ungetService(bundleState, getRegistration(), value);
                 		value = null;
                 	}
+                }
+                finally {
+                    semaphore.release();
                 }
             }
         }
