@@ -435,6 +435,16 @@ abstract class AbstractBundleState implements Bundle {
 
     @Override
     public URL getEntry(String path) {
+        if (path!=null && path.startsWith("file:/")) {
+            try
+            {
+                return new URL(path);
+            }
+            catch (Exception e)
+            {
+                //ignore - try old
+            }
+        }
         return getCurrentRevision().getEntry(path);
     }
 
