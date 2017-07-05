@@ -22,6 +22,7 @@
 package org.jboss.osgi.framework.internal;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
@@ -209,6 +210,21 @@ final class RevisionContent implements EntriesProvider {
             	}
 
             	return code;
+            }
+
+
+            /**
+             * We need to make sure DNS host resolution for internal JBoss URLs is not attempted under any
+             * circumstances. This method is overridden to do nothing!
+             *
+             * @param u a URL object
+             *
+             * @return an <code>InetAddress</code> representing the host
+             */
+            @Override
+            protected synchronized InetAddress getHostAddress(URL u)
+            {
+                return null;
             }
         };
 
