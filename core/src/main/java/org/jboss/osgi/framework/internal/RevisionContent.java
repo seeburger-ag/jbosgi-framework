@@ -171,8 +171,45 @@ final class RevisionContent implements EntriesProvider {
                 return real.getStreamURL().openConnection();
             }
 
-            // [TODO] overwrite hashCode for to prevent host address resolution
-            // when offline the BundleEntriesTestCase is slow because of this
+
+            /**
+             * Seeburger override for the hash-code of JBoss OSGi URLs. URLs have as a host
+             * the bundle name name + runtime number like:
+             * com.seeburger.osgi.net.sf.jasperreports-134-0-0
+             * We need to prevent any hostname lookup via the naming service since it will result
+             * in timeouts.
+             *
+             * @param u a URL object
+             *
+             * @return an <tt>int</tt> suitable for hash table indexing
+             */
+            @Override
+            protected int hashCode(URL u)
+            {
+            	int code = 0;
+
+            	if (u.getProtocol() != null)
+            	{
+            		code += u.getProtocol().hashCode();
+            	}
+
+            	if (u.getHost() != null)
+            	{
+            		code += u.getHost().hashCode();
+            	}
+
+            	if (u.getPort() > 0)
+            	{
+            		code += u.getPort();
+            	}
+
+            	if (u.getFile() != null)
+            	{
+            		code += u.getFile().hashCode();
+            	}
+
+            	return code;
+            }
         };
 
         String rootPath = virtualFile.getPathName();
