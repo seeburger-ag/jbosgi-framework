@@ -196,7 +196,7 @@ final class RevisionContent implements EntriesProvider {
 
             	if (u.getHost() != null)
             	{
-            		code += u.getHost().hashCode();
+            		code += u.getHost().toLowerCase().hashCode();
             	}
 
             	if (u.getPort() > 0)
@@ -207,6 +207,11 @@ final class RevisionContent implements EntriesProvider {
             	if (u.getFile() != null)
             	{
             		code += u.getFile().hashCode();
+            	}
+
+            	if (u.getRef() != null)
+            	{
+            		code += u.getRef().hashCode();
             	}
 
             	return code;
