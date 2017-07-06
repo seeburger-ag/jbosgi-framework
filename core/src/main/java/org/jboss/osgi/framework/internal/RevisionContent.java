@@ -220,7 +220,10 @@ final class RevisionContent implements EntriesProvider {
 
             /**
              * We need to make sure DNS host resolution for internal JBoss URLs is not attempted under any
-             * circumstances. This method is overridden to do nothing!
+             * circumstances. This method is overridden to do nothing! It may be called by both hashCode()
+             * and equals() also hostsEqual(). Since the current URLStreamHandler is only used for
+             * bundle:// URLs, the resolution to InetAddress is meaningless. hostsEqual() is smart enough
+             * to compare host names if InetAddress is null.
              *
              * @param u a URL object
              *
