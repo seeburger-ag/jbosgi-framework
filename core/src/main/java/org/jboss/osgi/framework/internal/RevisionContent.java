@@ -22,6 +22,7 @@
 package org.jboss.osgi.framework.internal;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
@@ -171,8 +172,23 @@ final class RevisionContent implements EntriesProvider {
                 return real.getStreamURL().openConnection();
             }
 
-            // [TODO] overwrite hashCode for to prevent host address resolution
-            // when offline the BundleEntriesTestCase is slow because of this
+
+            /**
+             * We need to make sure DNS host resolution for internal JBoss URLs is not attempted under any
+             * circumstances. This method is overridden to do nothing! It may be called by both hashCode()
+             * and equals() also hostsEqual(). Since the current URLStreamHandler is only used for
+             * bundle:// URLs, the resolution to InetAddress is meaningless. hostsEqual() is smart enough
+             * to compare host names if InetAddress is null.
+             *
+             * @param u a URL object
+             *
+             * @return an <code>InetAddress</code> representing the host
+             */
+            @Override
+            protected synchronized InetAddress getHostAddress(URL u)
+            {
+                return null;
+            }
         };
 
         String rootPath = virtualFile.getPathName();
