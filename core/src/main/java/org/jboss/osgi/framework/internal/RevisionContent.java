@@ -174,51 +174,6 @@ final class RevisionContent implements EntriesProvider {
 
 
             /**
-             * Seeburger override for the hash-code of JBoss OSGi URLs. URLs have as a host
-             * the bundle name name + runtime number like:
-             * com.seeburger.osgi.net.sf.jasperreports-134-0-0
-             * We need to prevent any hostname lookup via the naming service since it will result
-             * in timeouts.
-             *
-             * @param u a URL object
-             *
-             * @return an <tt>int</tt> suitable for hash table indexing
-             */
-            @Override
-            protected int hashCode(URL u)
-            {
-            	int code = 0;
-
-            	if (u.getProtocol() != null)
-            	{
-            		code += u.getProtocol().hashCode();
-            	}
-
-            	if (u.getHost() != null)
-            	{
-            		code += u.getHost().toLowerCase().hashCode();
-            	}
-
-            	if (u.getPort() > 0)
-            	{
-            		code += u.getPort();
-            	}
-
-            	if (u.getFile() != null)
-            	{
-            		code += u.getFile().hashCode();
-            	}
-
-            	if (u.getRef() != null)
-            	{
-            		code += u.getRef().hashCode();
-            	}
-
-            	return code;
-            }
-
-
-            /**
              * We need to make sure DNS host resolution for internal JBoss URLs is not attempted under any
              * circumstances. This method is overridden to do nothing! It may be called by both hashCode()
              * and equals() also hostsEqual(). Since the current URLStreamHandler is only used for
