@@ -67,6 +67,8 @@ abstract class UserBundleState extends AbstractBundleState {
     // Provide logging
     static final Logger log = Logger.getLogger(UserBundleState.class);
 
+    private static final long LOCK_TIMEOUT = Long.getLong("org.jboss.osgi.framework.internal.UserBundleState.LOCK_TIMEOUT", 10000);
+
     private final Semaphore uninstallSemaphore = new Semaphore(1);
 
     private final ServiceName serviceName;
@@ -208,16 +210,20 @@ abstract class UserBundleState extends AbstractBundleState {
     }
 
     boolean aquireUninstallLock() {
-        try {
-            log.tracef("Aquire uninstall lock: %s", this);
-            boolean result = uninstallSemaphore.tryAcquire(10, TimeUnit.SECONDS);
-            if (result == false)
-                log.warnf("Cannot acquire unstall lock for: %s", this);
-            return result;
-        } catch (InterruptedException ex) {
-            // ignore
-            return false;
+        long waitTime = LOCK_TIMEOUT;
+        final long startTime = System.currentTimeMillis();
+        while (System.currentTimeMillis() < startTime + waitTime) {
+            try {
+                log.tracef("Aquire uninstall lock: %s", this);
+                boolean result = uninstallSemaphore.tryAcquire(waitTime, TimeUnit.MILLISECONDS);
+                if (result == false)
+                    log.warnf("Cannot acquire unstall lock for: %s", this);
+                return result;
+            } catch (InterruptedException ex) {
+                // ignore
+            }
         }
+        return false;
     }
 
     void releaseUninstallLock() {

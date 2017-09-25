@@ -53,6 +53,8 @@ final class HostBundleState extends UserBundleState {
 
     static final Logger log = Logger.getLogger(HostBundleState.class);
 
+    private static final long LOCK_TIMEOUT = Long.getLong("org.jboss.osgi.framework.internal.HostBundleState.LOCK_TIMEOUT", 10000);
+
     private final Semaphore activationSemaphore = new Semaphore(1);
     private final AtomicBoolean alreadyStarting = new AtomicBoolean();
     private final AtomicBoolean awaitLazyActivation = new AtomicBoolean();
@@ -429,19 +431,25 @@ final class HostBundleState extends UserBundleState {
     }
 
     private void aquireActivationLock() throws BundleException {
-        try {
-            log.tracef("Aquire activation lock: %s", this);
-            if (activationSemaphore.tryAcquire(10, TimeUnit.SECONDS) == false)
-                throw new BundleException("Cannot acquire start/stop lock for: " + this);
-        } catch (InterruptedException ex) {
-            log.warnf("Interupted while trying to start/stop bundle: %s", this);
-            return;
+        long waitTime = LOCK_TIMEOUT;
+        final long startTime = System.currentTimeMillis();
+        while (System.currentTimeMillis() < startTime + waitTime) {
+            try {
+                log.tracef("Aquire activation lock: %s", this);
+                if (activationSemaphore.tryAcquire(waitTime, TimeUnit.MILLISECONDS))
+                    return;
+                // else fall through to BundleException
+            } catch (InterruptedException ex) {
+                log.warnf("Interupted while trying to start/stop bundle: %s", this);
+            }
         }
+
+        throw new BundleException("Cannot acquire start/stop lock for: " + this);
     }
 
     private void releaseActivationLock() {
-        log.tracef("Release activation lock: %s", this);
         activationSemaphore.release();
+        log.tracef("Released activation lock: %s", this);
     }
 
     private void removeServicesAndListeners() {
