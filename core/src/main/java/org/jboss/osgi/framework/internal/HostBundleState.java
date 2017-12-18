@@ -463,4 +463,21 @@ final class HostBundleState extends UserBundleState {
         FrameworkEventsPlugin eventsPlugin = getFrameworkState().getFrameworkEventsPlugin();
         eventsPlugin.removeBundleListeners(this);
     }
+
+    @Override
+    public String toString()
+    {
+        final StringBuilder builder = new StringBuilder();
+        builder.append(super.toString());
+        builder.append(", startLevel=");
+        builder.append(startLevel);
+        builder.append(", alreadyStarting=");
+        builder.append(alreadyStarting.get());
+        builder.append(", awaitLazyActivation=");
+        builder.append(awaitLazyActivation.get());
+        builder.append(", activationSemaphore=");
+        builder.append(activationSemaphore);
+        return builder.toString();
+    }
+
 }
