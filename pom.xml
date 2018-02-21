@@ -61,6 +61,9 @@
         <!--  Distribution Management settings  -->
         <jboss.releases.repo.url>https://repo.seeburger.de/archiva/repository/release/</jboss.releases.repo.url>
         <jboss.snapshots.repo.url>https://repo.seeburger.de/archiva/repository/snapshot/</jboss.snapshots.repo.url>
+
+        <!-- by default, do not fail on javadoc errors - became more strict with Java8 -->
+        <maven.javadoc.failOnError>false</maven.javadoc.failOnError>
     </properties>
 
 

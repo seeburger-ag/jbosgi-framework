@@ -74,6 +74,7 @@ final class HostBundleState extends UserBundleState {
         return (HostBundleState) bundleState;
     }
 
+    @Override
     void initUserBundleState(OSGiMetaData metadata) {
         StartLevel startLevelService = getCoreServices().getStartLevelPlugin();
         startLevel = startLevelService.getInitialBundleStartLevel();
@@ -92,6 +93,7 @@ final class HostBundleState extends UserBundleState {
 
     // Invalid discovery of Bundle.getBundleContext() method
     // http://issues.ops4j.org/browse/PAXSB-44
+    @Override
     public BundleContext getBundleContext() {
         return super.getBundleContext();
     }
@@ -177,6 +179,7 @@ final class HostBundleState extends UserBundleState {
         return alreadyStarting.get();
     }
 
+    @Override
     void startInternal(int options) throws BundleException {
 
         // Assert the required start conditions
@@ -423,8 +426,13 @@ final class HostBundleState extends UserBundleState {
 
             log.infof("Bundle stopped: %s", this);
 
-            if (rethrow != null)
-                throw new BundleException("Error during stop of bundle: " + this.toStringExtended(), rethrow);
+            if (rethrow != null) {
+                if (rethrow.getCause()!=null) {
+                    log.infof("Error during stop of bundle: %s; Reason: %s; Caused by: ", this.toStringExtended(), rethrow.toString(), rethrow.getCause().toString());
+                } else {
+                    log.infof("Error during stop of bundle: %s; Reason: %s", this.toStringExtended(), rethrow.toString());
+                }
+            }
         } finally {
             releaseActivationLock();
         }
