@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.jboss.logging.Logger;
@@ -55,7 +56,16 @@ final class HostBundleFallbackLoader implements LocalLoader {
     // Provide logging
     private static final Logger log = Logger.getLogger(HostBundleFallbackLoader.class);
 
-    private static ThreadLocal<Map<String, AtomicInteger>> dynamicLoadAttempts;
+    private static final ThreadLocal<Set<String>> dynamicLoading = new ThreadLocal<Set<String>>()
+    {
+        @Override
+        protected Set<String> initialValue()
+        {
+            // Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+            return ConcurrentHashMap.newKeySet();
+        }
+    };
+
     private final HostBundleState hostBundle;
     private final ModuleIdentifier identifier;
     private final Set<String> importedPaths;
@@ -88,7 +98,7 @@ final class HostBundleFallbackLoader implements LocalLoader {
         try {
             return moduleClassLoader.loadClass(className);
         } catch (ClassNotFoundException ex) {
-            log.tracef("Cannot load class [%s] from module: %s", className, module);
+            log.warnf("Cannot load class [%s] from module: %s", className, module);
             return null;
         }
     }
@@ -114,7 +124,7 @@ final class HostBundleFallbackLoader implements LocalLoader {
 
         URL resURL = module.getExportedResource(resName);
         if (resURL == null) {
-            log.tracef("Cannot load resource [%s] from module: %s", resName, module);
+            log.warnf("Cannot load resource [%s] from module: %s", resName, module);
             return Collections.emptyList();
         }
 
@@ -130,38 +140,25 @@ final class HostBundleFallbackLoader implements LocalLoader {
         if (importedPaths.contains(path))
             return null;
 
-        if (dynamicLoadAttempts == null)
-            dynamicLoadAttempts = new ThreadLocal<Map<String, AtomicInteger>>();
-
-        Map<String, AtomicInteger> mapping = dynamicLoadAttempts.get();
-        boolean removeThreadLocalMapping = false;
+        Set<String> set = dynamicLoading.get();
+        boolean added = false;
         try {
-            if (mapping == null) {
-                mapping = new HashMap<String, AtomicInteger>();
-                dynamicLoadAttempts.set(mapping);
-                removeThreadLocalMapping = true;
+            added = set.add(resName);
+            if (!added) {
+                // already in findModuleDynamically for this resName
+                return null;
             }
 
-            AtomicInteger recursiveDepth = mapping.get(resName);
-            if (recursiveDepth == null)
-                mapping.put(resName, recursiveDepth = new AtomicInteger());
+            Module module = findInResolvedModules(resName, matchingPatterns);
+            if (module != null && module.getIdentifier().equals(identifier) == false)
+                return module;
 
-            if (recursiveDepth.incrementAndGet() == 1) {
-                Module module = findInResolvedModules(resName, matchingPatterns);
-                if (module != null && module.getIdentifier().equals(identifier) == false)
-                    return module;
-
-                module = findInUnresolvedModules(resName, matchingPatterns);
-                if (module != null && module.getIdentifier().equals(identifier) == false)
-                    return module;
-            }
+            module = findInUnresolvedModules(resName, matchingPatterns);
+            if (module != null && module.getIdentifier().equals(identifier) == false)
+                return module;
         } finally {
-            if (removeThreadLocalMapping == true) {
-                dynamicLoadAttempts.remove();
-            } else {
-                AtomicInteger recursiveDepth = mapping.get(resName);
-                if (recursiveDepth.decrementAndGet() == 0)
-                    mapping.remove(resName);
+            if (added) {
+                set.remove(resName);
             }
         }
         return null;
