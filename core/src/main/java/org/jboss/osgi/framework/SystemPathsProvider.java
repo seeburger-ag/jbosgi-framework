@@ -21,10 +21,10 @@
  */
 package org.jboss.osgi.framework;
 
+import java.util.Set;
+
 import org.jboss.modules.filter.PathFilter;
 import org.jboss.msc.service.Service;
-
-import java.util.Set;
 
 /**
  * A plugin manages the Framework's system packages.
@@ -50,6 +50,7 @@ public interface SystemPathsProvider extends Service<SystemPathsProvider> {
             "org.osgi.framework.hooks.service;version=1.1",
             "org.osgi.framework.hooks.weaving;version=1.0",
             "org.osgi.framework.launch;version=1.0",
+            "org.osgi.framework.startlevel;version=1.0",
             "org.osgi.service.condpermadmin;version=1.1",
             "org.osgi.service.packageadmin;version=1.2",
             "org.osgi.service.permissionadmin;version=1.2",
