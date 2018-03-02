@@ -36,8 +36,10 @@ import org.jboss.msc.service.ServiceController;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.ServiceTarget;
 import org.jboss.osgi.deployment.deployer.Deployment;
+import org.jboss.osgi.deployment.deployer.DeploymentFactory;
 import org.jboss.osgi.framework.BundleInstallProvider;
 import org.jboss.osgi.framework.FutureServiceValue;
+import org.jboss.osgi.spi.BundleInfo;
 import org.jboss.osgi.vfs.AbstractVFS;
 import org.jboss.osgi.vfs.VFSUtils;
 import org.jboss.osgi.vfs.VirtualFile;
@@ -180,10 +182,47 @@ abstract class AbstractBundleContext implements BundleContext {
             if (rootFile == null)
                 throw new BundleException("Cannot obtain virtual file from: " + location);
 
-            DeploymentFactoryPlugin deploymentPlugin = frameworkState.getDeploymentFactoryPlugin();
-            dep = deploymentPlugin.createDeployment(location, rootFile);
+            //our stuff for runtime deployment
+			if (location.startsWith("file:")) {
+				ServiceTarget serviceTarget = getBundleManager().getServiceTarget();
+				BundleInfo info = BundleInfo.createBundleInfo(location);
+				Deployment deployment = DeploymentFactory.createDeployment(info);
+				ServiceName serviceName = getBundleManager().installBundle(serviceTarget, deployment);
 
-            return installBundle(dep);
+				ServiceContainer serviceContainer = getBundleManager().getServiceContainer();
+				ServiceController<UserBundleState> controller = (ServiceController<UserBundleState>) serviceContainer.getService(serviceName);
+				for(int i=0;i<5;i++)
+				{
+					Bundle bundle = deployment.getAttachment(Bundle.class);
+					if(bundle!=null)
+						return bundle;
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						// ignore
+					}
+
+				}
+				return null;
+//				return getBundle(deployment.getAttachment(BundleId.class).longValue());
+//				FutureServiceValue<UserBundleState> future = new FutureServiceValue<UserBundleState>(controller);
+//				try {
+//					UserBundleState userBundle = future.get(5, TimeUnit.SECONDS);
+//					return userBundle;
+//				} catch (Exception ex) {
+//					Throwable cause = ex.getCause();
+//					if (cause instanceof BundleException)
+//						throw (BundleException) cause;
+//					throw new BundleException("Cannot install bundle: " + deployment.getLocation(), ex);
+//				}
+			}
+			//end of our stuff
+			else {
+				DeploymentFactoryPlugin deploymentPlugin = frameworkState.getDeploymentFactoryPlugin();
+				dep = deploymentPlugin.createDeployment(location, rootFile);
+
+				return installBundle(dep);
+			}
 
         } catch (RuntimeException rte) {
             VFSUtils.safeClose(rootFile);
