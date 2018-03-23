@@ -102,18 +102,18 @@ public class BundleWiringImpl implements BundleWiring {
 
 	@Override
 	public ClassLoader getClassLoader() {
-		try {
+	    if (state instanceof AbstractBundleState) {
+	        try {
+	            AbstractBundleState bundleState = (AbstractBundleState) state;
+	            return bundleState.getCurrentRevision().getModuleClassLoader();
+	        } catch (ModuleLoadException e) {
+	            log.errorv("Failed to retrieve the bundle classloader for {0}",state,e);
+	            // falling through to own CL
+	        }
+	    }
 
-			if (state instanceof AbstractBundleState) {
-				AbstractBundleState bundleState = (AbstractBundleState) state;
-				return bundleState.getCurrentRevision().getModuleClassLoader();
-			}
-			//if it's not an abstract bundle state, it must be the framework, so we use the own classloader
-			return getClass().getClassLoader();
-		} catch (ModuleLoadException e) {
-			log.errorv("Failed to retrieve the bundle classloader for {0}",state,e);
-		}
-		return getClassLoader();
+		//if it's not an abstract bundle state, it must be the framework, so we use the own classloader
+		return getClass().getClassLoader();
 	}
 
 	@Override
