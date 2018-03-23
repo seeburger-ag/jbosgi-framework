@@ -24,7 +24,7 @@
     <artifactId>jbosgi-framework-parent</artifactId>
     <packaging>pom</packaging>
 
-    <version>1.1.8.SEE22</version>
+    <version>1.1.8.SEE23-SNAPSHOT</version>
 
 
     <!-- Source Control -->
@@ -32,7 +32,7 @@
         <connection>scm:git:git://github.com/seeburger-ag/jbosgi-framework.git</connection>
         <developerConnection>scm:git:git@github.com:seeburger-ag/jbosgi-framework.git</developerConnection>
         <url>http://github.com/seeburger-ag/jbosgi-framework</url>
-      <tag>jbosgi-framework-parent-1.1.8.SEE22</tag>
+      <tag>HEAD</tag>
   </scm>
 
 
