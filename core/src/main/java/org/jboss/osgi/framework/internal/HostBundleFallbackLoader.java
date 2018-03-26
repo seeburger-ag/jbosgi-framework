@@ -31,7 +31,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.jboss.logging.Logger;
 import org.jboss.modules.LocalLoader;
 import org.jboss.modules.Module;
 import org.jboss.modules.ModuleClassLoader;
@@ -52,9 +51,6 @@ import org.osgi.framework.Bundle;
  * @since 29-Jun-2010
  */
 final class HostBundleFallbackLoader implements LocalLoader {
-
-    // Provide logging
-    private static final Logger log = Logger.getLogger(HostBundleFallbackLoader.class);
 
     private static final ThreadLocal<Set<String>> dynamicLoading = new ThreadLocal<Set<String>>()
     {
@@ -98,7 +94,9 @@ final class HostBundleFallbackLoader implements LocalLoader {
         try {
             return moduleClassLoader.loadClass(className);
         } catch (ClassNotFoundException ex) {
-            log.warnf("Cannot load class [%s] from module: %s", className, module);
+            final String identifierName = module.getIdentifier().getName();
+            // do not pass "module" here, since its toString may call findClass recursively
+            System.err.printf("Cannot load class [%s] from module: %s", className, identifierName);
             return null;
         }
     }
@@ -124,7 +122,9 @@ final class HostBundleFallbackLoader implements LocalLoader {
 
         URL resURL = module.getExportedResource(resName);
         if (resURL == null) {
-            log.warnf("Cannot load resource [%s] from module: %s", resName, module);
+            final String identifierName = module.getIdentifier().getName();
+            // do not pass "module" here, since its toString may call findClass recursively
+            System.err.printf("Cannot load resource [%s] from module: %s", resName, identifierName);
             return Collections.emptyList();
         }
 
@@ -196,16 +196,16 @@ final class HostBundleFallbackLoader implements LocalLoader {
             }
         }
 
-        if (foundMatch.isEmpty() == false)
-            log.tracef("Found match for path [%s] with Dynamic-ImportPackage pattern: %s", resName, foundMatch);
-        else
-            log.tracef("Class [%s] does not match Dynamic-ImportPackage patterns", resName);
+//        if (foundMatch.isEmpty() == false)
+//            log.tracef("Found match for path [%s] with Dynamic-ImportPackage pattern: %s", resName, foundMatch);
+//        else
+//            log.tracef("Class [%s] does not match Dynamic-ImportPackage patterns", resName);
 
         return foundMatch;
     }
 
     private Module findInResolvedModules(String resName, List<XPackageRequirement> matchingPatterns) {
-        log.tracef("Attempt to find path dynamically in resolved modules ...");
+//        log.tracef("Attempt to find path dynamically in resolved modules ...");
         ResolverPlugin resolverPlugin = hostBundle.getFrameworkState().getResolverPlugin();
         ModuleManagerPlugin moduleManager = hostBundle.getFrameworkState().getModuleManagerPlugin();
         for (XPackageRequirement packageReq : matchingPatterns) {
@@ -222,7 +222,7 @@ final class HostBundleFallbackLoader implements LocalLoader {
     }
 
     private Module findInUnresolvedModules(String resName, List<XPackageRequirement> matchingPatterns) {
-        log.tracef("Attempt to find path dynamically in unresolved modules ...");
+//        log.tracef("Attempt to find path dynamically in unresolved modules ...");
         for (AbstractBundleState bundleState : hostBundle.getBundleManager().getBundles()) {
             if (bundleState.getState() == Bundle.INSTALLED) {
                 bundleState.ensureResolved(false);
@@ -241,12 +241,10 @@ final class HostBundleFallbackLoader implements LocalLoader {
         if (candidateId.equals(identifier))
             return false;
 
-        log.tracef("Attempt to find path dynamically [%s] in %s ...", resName, candidateId);
         URL resURL = candidate.getExportedResource(resName);
         if (resURL == null)
             return false;
 
-        log.tracef("Found path [%s] in %s", resName, candidate);
         ModuleManagerPlugin moduleManager = hostBundle.getFrameworkState().getModuleManagerPlugin();
         AbstractBundleRevision bundleRevision = moduleManager.getBundleRevision(candidateId);
         XModule resModule = bundleRevision.getResolverModule();
@@ -258,7 +256,6 @@ final class HostBundleFallbackLoader implements LocalLoader {
     private XPackageCapability getCandidateCapability(XModule resModule, XPackageRequirement packageReq) {
         for (XPackageCapability packageCap : resModule.getPackageCapabilities()) {
             if (packageReq.match(packageCap)) {
-                log.tracef("Matching package capability: %s", packageCap);
                 return packageCap;
             }
         }
