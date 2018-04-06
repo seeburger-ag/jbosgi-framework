@@ -250,11 +250,13 @@ public final class BundleManager extends AbstractService<BundleManagerService> i
             throw new IllegalArgumentException("Null bundleState");
 
         long bundleId = bundleState.getBundleId();
-        if (bundleMap.containsKey(bundleId) == true)
-            throw new IllegalStateException("Bundle already added: " + bundleState);
-
-        log.infof("Install bundle: %s", bundleState);
-        bundleMap.put(bundleState.getBundleId(), bundleState);
+        synchronized (bundleMap)
+        {
+            if (bundleMap.containsKey(bundleId) == true)
+                throw new IllegalStateException("Bundle already added: " + bundleState);
+            log.infof("Install bundle: %s", bundleState);
+            bundleMap.put(bundleState.getBundleId(), bundleState);
+        }
     }
 
     /**
