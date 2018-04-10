@@ -23,11 +23,11 @@ package org.jboss.osgi.framework.util;
 
 /**
  * Provides common access to specifics about the version of <em>Java</em> that a virtual machine supports.
- * 
+ *
  * <p>
  * Determines the version of the <em>Java Virtual Machine</em> by checking for the availablity of version specific classes.
  * <p>
- * 
+ *
  * <p>
  * Classes are loaded in the following order:
  * <ol>
@@ -39,7 +39,7 @@ package org.jboss.osgi.framework.util;
  * <li><tt>java.lang.management.LockInfo</tt> was introduced in JDK 1.6</li>
  * </ol>
  * </p>
- * 
+ *
  * @version <tt>$Revision: 2240 $</tt>
  * @author <a href="mailto:jason@planet57.com">Jason Dillon</a>
  * @author <a href="mailto:dimitris@jboss.org">Dimitris Andreadis</a>
@@ -71,9 +71,18 @@ public final class Java {
     /** Java version 1.6 token */
     public static final int VERSION_1_6 = 0x07;
 
+    /** Java version 1.7 token */
+    public static final int VERSION_1_7 = 0x08;
+
+    /** Java version 1.8 token */
+    public static final int VERSION_1_8 = 0x09;
+
+    /** Java version 1.9 token */
+    public static final int VERSION_1_9 = 0x0a;
+
     /**
      * Private to avoid over optimization by the compiler.
-     * 
+     *
      * @see #getVersion() Use this method to access this final value.
      */
     private static final int VERSION;
@@ -107,6 +116,18 @@ public final class Java {
             // check for 1.6
             Class.forName("java.lang.management.LockInfo");
             version = VERSION_1_6;
+
+            // check for 1.7
+            Class.forName("java.nio.file.FileStore");
+            version = VERSION_1_7;
+
+            // check for 1.8
+            Class.forName("java.util.stream.Stream");
+            version = VERSION_1_8;
+
+            // check for 1.9
+            Class.forName("java.lang.StackWalker");
+            version = VERSION_1_9;
         } catch (ClassNotFoundException ignore) {
         }
         VERSION = version;
@@ -114,7 +135,7 @@ public final class Java {
 
     /**
      * Return the version of <em>Java</em> supported by the VM.
-     * 
+     *
      * @return The version of <em>Java</em> supported by the VM.
      */
     public static int getVersion() {
@@ -122,8 +143,8 @@ public final class Java {
     }
 
     /**
-     * Returns true if the given version identifer is equal to the version identifier of the current virtuial machine.
-     * 
+     * Returns true if the given version identifier is equal to the version identifier of the current virtual machine.
+     *
      * @param version The version identifier to check for.
      * @return True if the current virtual machine is the same version.
      */
@@ -133,7 +154,7 @@ public final class Java {
 
     /**
      * Returns true if the current virtual machine is compatible with the given version identifer.
-     * 
+     *
      * @param version The version identifier to check compatibility of.
      * @return True if the current virtual machine is compatible.
      */
