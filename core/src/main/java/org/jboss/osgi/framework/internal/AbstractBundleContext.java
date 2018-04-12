@@ -443,8 +443,10 @@ abstract class AbstractBundleContext implements BundleContext {
 			throws InvalidSyntaxException {
 		ServiceReference[] serviceReferences = getServiceReferences(clazz.getName(), filter);
 		List<ServiceReference<S>> result = new ArrayList<ServiceReference<S>>();
-		for (ServiceReference<S> s : serviceReferences) {
-			result.add(s);
+		if (serviceReferences != null) {
+			for (ServiceReference<S> s : serviceReferences) {
+				result.add(s);
+			}
 		}
 		return result;
 	}
