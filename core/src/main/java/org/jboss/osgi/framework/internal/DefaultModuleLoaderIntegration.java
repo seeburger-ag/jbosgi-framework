@@ -24,6 +24,7 @@ package org.jboss.osgi.framework.internal;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import org.jboss.logging.Logger;
 import org.jboss.modules.DependencySpec;
@@ -55,7 +56,7 @@ final class DefaultModuleLoaderIntegration extends ModuleLoader implements Modul
     // Provide logging
     static final Logger log = Logger.getLogger(DefaultModuleLoaderIntegration.class);
 
-    private Map<ModuleIdentifier, ModuleHolder> moduleSpecs = new ConcurrentHashMap<ModuleIdentifier, ModuleHolder>();
+    private ConcurrentMap<ModuleIdentifier, ModuleHolder> moduleSpecs = new ConcurrentHashMap<ModuleIdentifier, ModuleHolder>();
 
     static void addService(ServiceTarget serviceTarget) {
         ModuleLoaderProvider service = new DefaultModuleLoaderIntegration();
@@ -111,20 +112,19 @@ final class DefaultModuleLoaderIntegration extends ModuleLoader implements Modul
     public void addModule(ModuleSpec moduleSpec) {
         log.tracef("addModule: %s", moduleSpec.getModuleIdentifier());
         ModuleIdentifier identifier = moduleSpec.getModuleIdentifier();
-        if (moduleSpecs.get(identifier) != null)
+        ModuleHolder existing = moduleSpecs.putIfAbsent(identifier, new ModuleHolder(moduleSpec));
+        if (existing != null)
             throw new IllegalStateException("Module already exists: " + identifier);
-        ModuleHolder moduleHolder = new ModuleHolder(moduleSpec);
-        moduleSpecs.put(identifier, moduleHolder);
     }
 
     @Override
     public void addModule(Module module) {
         log.tracef("addModule: %s", module.getIdentifier());
         ModuleIdentifier identifier = module.getIdentifier();
-        if (moduleSpecs.get(identifier) != null)
+        ModuleHolder existing = moduleSpecs.putIfAbsent(identifier, new ModuleHolder(module));
+        if (existing != null) {
             throw new IllegalStateException("Module already exists: " + identifier);
-        ModuleHolder moduleHolder = new ModuleHolder(module);
-        moduleSpecs.put(identifier, moduleHolder);
+        }
     }
 
     @Override
