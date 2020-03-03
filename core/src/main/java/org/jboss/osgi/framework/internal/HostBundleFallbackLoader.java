@@ -24,13 +24,11 @@ package org.jboss.osgi.framework.internal;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-
+import org.jboss.logging.Logger;
 import org.jboss.modules.LocalLoader;
 import org.jboss.modules.Module;
 import org.jboss.modules.ModuleClassLoader;
@@ -51,6 +49,9 @@ import org.osgi.framework.Bundle;
  * @since 29-Jun-2010
  */
 final class HostBundleFallbackLoader implements LocalLoader {
+    private static final Logger log = Logger.getLogger(HostBundleFallbackLoader.class);
+
+    private static final boolean skipCache = Boolean.getBoolean("com.seeburger.jboss.osgi.hostbundlefallbackloader.skipCache");
 
     private static final ThreadLocal<Set<String>> dynamicLoading = new ThreadLocal<Set<String>>()
     {
@@ -62,6 +63,7 @@ final class HostBundleFallbackLoader implements LocalLoader {
         }
     };
 
+    private final Map<String, Module> moduleCache = new ConcurrentHashMap<String, Module>();
     private final HostBundleState hostBundle;
     private final ModuleIdentifier identifier;
     private final Set<String> importedPaths;
@@ -86,7 +88,7 @@ final class HostBundleFallbackLoader implements LocalLoader {
             return null;
 
         String pathName = className.replace('.', '/') + ".class";
-        Module module = findModuleDynamically(pathName, matchingPatterns);
+        Module module = findModuleDynamicallyCaching(pathName, matchingPatterns);
         if (module == null)
             return null;
 
@@ -116,7 +118,7 @@ final class HostBundleFallbackLoader implements LocalLoader {
         if (matchingPatterns.isEmpty())
             return Collections.emptyList();
 
-        Module module = findModuleDynamically(resName, matchingPatterns);
+        Module module = findModuleDynamicallyCaching(resName, matchingPatterns);
         if (module == null)
             return Collections.emptyList();
 
@@ -129,6 +131,24 @@ final class HostBundleFallbackLoader implements LocalLoader {
         }
 
         return Collections.singletonList((Resource) new URLResource(resURL));
+    }
+
+    private Module findModuleDynamicallyCaching(String resName, List<XPackageRequirement> matchingPatterns)
+    {
+        if (skipCache) {
+            return findModuleDynamically(resName, matchingPatterns);
+        }
+
+        Module module;
+        if (moduleCache.containsKey(resName)) {
+            module = moduleCache.get(resName);
+        } else {
+            module = findModuleDynamically(resName, matchingPatterns);
+            if (module!=null) {
+                moduleCache.put(resName, module);
+            }
+        }
+        return module;
     }
 
     private Module findModuleDynamically(String resName, List<XPackageRequirement> matchingPatterns) {
@@ -205,7 +225,7 @@ final class HostBundleFallbackLoader implements LocalLoader {
     }
 
     private Module findInResolvedModules(String resName, List<XPackageRequirement> matchingPatterns) {
-//        log.tracef("Attempt to find path dynamically in resolved modules ...");
+        log.debug("Trying to findInResolvedModules "+resName+" dynamically for "+identifier+" - Matching patterns set to: "+matchingPatterns.toString());
         ResolverPlugin resolverPlugin = hostBundle.getFrameworkState().getResolverPlugin();
         ModuleManagerPlugin moduleManager = hostBundle.getFrameworkState().getModuleManagerPlugin();
         for (XPackageRequirement packageReq : matchingPatterns) {
