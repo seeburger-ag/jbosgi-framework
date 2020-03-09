@@ -89,8 +89,17 @@ final class HostBundleFallbackLoader implements LocalLoader {
 
         String pathName = className.replace('.', '/') + ".class";
         Module module = findModuleDynamicallyCaching(pathName, matchingPatterns);
-        if (module == null)
+        if (module == null) {
             return null;
+        }
+
+        if (identifier.equals(module.getIdentifier())) {
+            log.warn("Loading class '"+pathName+"' from ourselves '"+identifier+"' will result in a stackoverflow error, skip cache...");
+            module = findModuleDynamically(pathName, matchingPatterns);
+            if (module == null) {
+                return null;
+            }
+        }
 
         ModuleClassLoader moduleClassLoader = module.getClassLoader();
         try {
