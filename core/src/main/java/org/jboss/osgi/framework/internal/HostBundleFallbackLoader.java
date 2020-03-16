@@ -53,12 +53,15 @@ final class HostBundleFallbackLoader implements LocalLoader {
 
     private static final boolean skipCache = Boolean.getBoolean("com.seeburger.jboss.osgi.hostbundlefallbackloader.skipCache");
 
-    private static final ThreadLocal<Set<String>> dynamicLoading = new ThreadLocal<Set<String>>()
-    {
+    private static final ThreadLocal<Set<String>> dynamicLoading = new ThreadLocal<Set<String>>() {
         @Override
-        protected Set<String> initialValue()
-        {
-            // Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+        protected Set<String> initialValue() {
+            return ConcurrentHashMap.newKeySet();
+        }
+    };
+    private static final ThreadLocal<Set<String>> dynamicCaching = new ThreadLocal<Set<String>>() {
+        @Override
+        protected Set<String> initialValue() {
             return ConcurrentHashMap.newKeySet();
         }
     };
@@ -91,14 +94,6 @@ final class HostBundleFallbackLoader implements LocalLoader {
         Module module = findModuleDynamicallyCaching(pathName, matchingPatterns);
         if (module == null) {
             return null;
-        }
-
-        if (identifier.equals(module.getIdentifier())) {
-            log.warn("Loading class '"+pathName+"' from ourselves '"+identifier+"' will result in a stackoverflow error, skip cache...");
-            module = findModuleDynamically(pathName, matchingPatterns);
-            if (module == null) {
-                return null;
-            }
         }
 
         ModuleClassLoader moduleClassLoader = module.getClassLoader();
@@ -148,16 +143,29 @@ final class HostBundleFallbackLoader implements LocalLoader {
             return findModuleDynamically(resName, matchingPatterns);
         }
 
-        Module module;
-        if (moduleCache.containsKey(resName)) {
-            module = moduleCache.get(resName);
-        } else {
-            module = findModuleDynamically(resName, matchingPatterns);
+        Set<String> set = dynamicCaching.get();
+        boolean added = false;
+        try {
+            added = set.add(resName);
+            if (!added) {
+                // already called in this thread
+                return null;
+            }
+            Module module = moduleCache.get(resName);
             if (module!=null) {
-                moduleCache.put(resName, module);
+                return module;
+            } else {
+                module = findModuleDynamically(resName, matchingPatterns);
+                if (module!=null) {
+                    moduleCache.put(resName, module);
+                }
+            }
+            return module;
+        } finally {
+            if (added) {
+                set.remove(resName);
             }
         }
-        return module;
     }
 
     private Module findModuleDynamically(String resName, List<XPackageRequirement> matchingPatterns) {
