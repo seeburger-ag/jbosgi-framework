@@ -205,7 +205,15 @@ final class HostBundleFallbackLoader implements LocalLoader {
 
         ModuleManagerPlugin moduleManager = hostBundle.getFrameworkState().getModuleManagerPlugin();
         AbstractBundleRevision bundleRev = moduleManager.getBundleRevision(identifier);
+        if (bundleRev==null) {
+            log.warn("Unable to retrieve bundle revision for "+identifier+". Return empty list");
+            return Collections.emptyList();
+        }
         XModule resModule = bundleRev.getResolverModule();
+        if (resModule==null) {
+            log.warn("Unable to retrieve resolver module for "+identifier+". Return empty list");
+            return Collections.emptyList();
+        }
         List<XPackageRequirement> dynamicRequirements = resModule.getDynamicPackageRequirements();
 
         // Dynamic imports may not be used when the package is exported
